@@ -13,7 +13,7 @@ function searchWikipedia() {
             var data = JSON.parse(xhr.responseText);
             displayResults(data.query.search, language);
         } else if (xhr.readyState === 4) {
-            alert('Error loading Wikipedia data');
+            console.error('Error loading Wikipedia data', xhr.responseText);
         }
     };
     xhr.send();
@@ -21,7 +21,8 @@ function searchWikipedia() {
 
 function displayResults(results, language) {
     var resultsContainer = document.getElementById("results");
-    resultsContainer.innerHTML = "";
+    resultsContainer.innerHTML = "";  // Clear previous results
+    resultsContainer.style.display = "block";  // Ensure it's visible in case it was hidden
 
     for (var i = 0; i < results.length; i++) {
         var resultItem = document.createElement("div");
@@ -39,6 +40,9 @@ function displayResults(results, language) {
 function loadArticle(title, language) {
     var url = 'https://' + language + '.wikipedia.org/w/api.php?action=parse&page=' + encodeURIComponent(title) + '&format=json&origin=*';
 
+    // Hide the results container
+    document.getElementById("results").style.display = "none";
+
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
     xhr.onreadystatechange = function () {
@@ -53,10 +57,11 @@ function loadArticle(title, language) {
                 displaySection(0);
                 document.getElementById("article-container").style.display = "block";
             } else {
+                console.error('Error parsing Wikipedia article', data);
                 document.getElementById("article").innerHTML = "Unable to load the article.";
             }
         } else if (xhr.readyState === 4) {
-            alert('Error loading article');
+            console.error('Error loading article', xhr.responseText);
         }
     };
     xhr.send();
@@ -113,5 +118,65 @@ function updateNavigationButtons() {
 }
 
 function sendToKindle() {
-    alert("Send to Kindle feature is under development. Stay tuned!");
+    // Prompt for the Kindle email
+    var email = prompt("Enter your Kindle email:");
+    
+    // Validate the email input
+    if (!email) {
+        alert("Email is required to send the EPUB.");
+        return;
+    }
+
+    var articleContent = document.getElementById("article").innerHTML;
+    var title = document.getElementById("search-bar").value; // Use the search title as the document title
+    var epubContent = createEpub(title, articleContent);
+
+    // Create a blob and use FileSaver.js to save it as an EPUB file
+    var blob = new Blob([epubContent], { type: 'application/epub+zip' });
+    var url = URL.createObjectURL(blob);
+    
+    // Use FileSaver.js to save the file
+    saveAs(blob, title + ".epub");
+
+    // Notify the user
+    alert("EPUB created. Please manually attach it and send it to " + email);
 }
+
+function createEpub(title, content) {
+    // Simple EPUB structure
+    var epub = `
+<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://www.idpf.org/2007/opf" version="3.0">
+    <metadata>
+        <dc:title>${title}</dc:title>
+        <dc:creator>Wikipedia Reader</dc:creator>
+        <dc:identifier id="id">urn:uuid:123456</dc:identifier>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    </metadata>
+    <manifest>
+        <item id="content" href="content.xhtml" media-type="application/xhtml+xml"/>
+    </manifest>
+    <spine>
+        <itemref idref="content"/>
+    </spine>
+</package>
+`;
+
+    // Create content.xhtml
+    var contentXhtml = `
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <title>${title}</title>
+</head>
+<body>
+    ${content}
+</body>
+</html>
+`;
+
+    return epub + contentXhtml; // Combine both parts
+}
+

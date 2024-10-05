@@ -43,3 +43,16 @@ button:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
+
+input[type="text"] {
+    font-size: 16px;  /* Ensure font size is at least 16px to prevent zoom */
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+.result-item {
+    padding: 8px;
+    border: solid 1px #ccc;
+    margin-bottom: 4px;
+}
