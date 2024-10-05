@@ -54,5 +54,5 @@ input[type="text"] {
     padding: 8px;
     border: solid 1px #ccc;
     margin-bottom: 4px;
-    cursor: pointer;
+    display: block;
 }
