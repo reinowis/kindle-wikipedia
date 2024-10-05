@@ -24,14 +24,13 @@ function displayResults(results, language) {
     resultsContainer.innerHTML = "";  // Clear previous results
 
     for (var i = 0; i < results.length; i++) {
-        var resultItem = document.createElement("div");
+        var resultItem = document.createElement("a");
+        resultItem.href = "#article";
+        resultItem.className = "result-item";
         resultItem.textContent = results[i].title;
-        resultItem.style.cursor = "pointer";
-        resultItem.onclick = (function (title) {
-            return function () {
-                loadArticle(title, language);
-            };
-        })(results[i].title);
+        resultItem.onclick = function (title) {
+            loadArticle(results[i].title, language);
+        };
         resultsContainer.appendChild(resultItem);
     }
 }
