@@ -25,11 +25,12 @@ function displayResults(results, language) {
 
     for (var i = 0; i < results.length; i++) {
         var resultItem = document.createElement("a");
+        var title = results[i].title;
         resultItem.href = "#article";
         resultItem.className = "result-item";
         resultItem.textContent = results[i].title;
-        resultItem.onclick = function (title) {
-            loadArticle(results[i].title, language);
+        resultItem.onclick = function () {
+            loadArticle(title, language);
         };
         resultsContainer.appendChild(resultItem);
     }
