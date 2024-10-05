@@ -29,9 +29,11 @@ function displayResults(results, language) {
         resultItem.href = "#article";
         resultItem.className = "result-item";
         resultItem.textContent = results[i].title;
-        resultItem.onclick = function () {
-            loadArticle(this.textContent, language);
-        };
+        resultItem.onclick = (function (title) {
+            return function () {
+                loadArticle(title, language);
+            };
+        })(title); // Create closure for title
         resultsContainer.appendChild(resultItem);
     }
 }
@@ -175,4 +177,3 @@ function createEpub(title, content) {
 
     return epub + contentXhtml; // Combine both parts
 }
-
