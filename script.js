@@ -22,7 +22,6 @@ function searchWikipedia() {
 function displayResults(results, language) {
     var resultsContainer = document.getElementById("results");
     resultsContainer.innerHTML = "";  // Clear previous results
-    resultsContainer.style.display = "block";  // Ensure it's visible in case it was hidden
 
     for (var i = 0; i < results.length; i++) {
         var resultItem = document.createElement("div");
@@ -39,9 +38,6 @@ function displayResults(results, language) {
 
 function loadArticle(title, language) {
     var url = 'https://' + language + '.wikipedia.org/w/api.php?action=parse&page=' + encodeURIComponent(title) + '&format=json&origin=*';
-
-    // Hide the results container
-    document.getElementById("results").style.display = "none";
 
     var xhr = new XMLHttpRequest();
     xhr.open('GET', url, true);
