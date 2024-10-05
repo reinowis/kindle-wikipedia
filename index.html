@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Wikipedia Reader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 10px;
+        }
+        #search-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #search-bar {
+            width: 70%;
+            padding: 10px;
+        }
+        #language-dropdown {
+            padding: 10px;
+        }
+        #results {
+            margin-top: 20px;
+        }
+        .result-item {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #f1f1f1;
+            border: 1px solid #ccc;
+            cursor: pointer;
+        }
+        #article-container {
+            display: none;
+            position: relative;
+        }
+        #send-to-kindle {
+            position: absolute;
+            right: 0;
+            top: 0;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #article {
+            margin-top: 40px;
+            padding: 20px;
+            background-color: #ffffff;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="search-section">
+            <input type="text" id="search-bar" placeholder="Search Wikipedia..." />
+            <select id="language-dropdown">
+                <option value="en">English</option>
+                <option value="fr">French</option>
+                <option value="es">Spanish</option>
+                <option value="de">German</option>
+                <!-- Add more languages as needed -->
+            </select>
+            <button onclick="searchWikipedia()">Search</button>
+        </div>
+        <div id="results"></div>
+        <div id="article-container">
+            <button id="send-to-kindle" onclick="sendToKindle()">Send to Kindle</button>
+            <div id="article"></div>
+        </div>
+    </div>
+
+    <script>
+        async function searchWikipedia() {
+            const query = document.getElementById("search-bar").value;
+            const language = document.getElementById("language-dropdown").value;
+            const url = `https://${language}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${query}&format=json&origin=*`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            displayResults(data.query.search, language);
+        }
+
+        function displayResults(results, language) {
+            const resultsContainer = document.getElementById("results");
+            resultsContainer.innerHTML = "";
+
+            results.forEach(result => {
+                const resultItem = document.createElement("div");
+                resultItem.classList.add("result-item");
+                resultItem.textContent = result.title;
+                resultItem.onclick = () => loadArticle(result.title, language);
+                resultsContainer.appendChild(resultItem);
+            });
+        }
+
+        async function loadArticle(title, language) {
+            const url = `https://${language}.wikipedia.org/w/api.php?action=query&prop=extracts&titles=${title}&format=json&origin=*&exintro=1&explaintext=1`;
+
+            const response = await fetch(url);
+            const data = await response.json();
+            const page = Object.values(data.query.pages)[0];
+
+            document.getElementById("article-container").style.display = "block";
+            document.getElementById("article").innerHTML = `<h1>${page.title}</h1><p>${page.extract}</p>`;
+        }
+
+        async function sendToKindle() {
+            const articleContent = document.getElementById("article").innerText;
+            const articleTitle = document.querySelector("#article h1").innerText;
+            const kindleEmail = prompt("Enter your Kindle email:");
+
+            if (kindleEmail) {
+                convertToEPUB(articleTitle, articleContent)
+                    .then(epubBlob => sendEmail(kindleEmail, articleTitle, epubBlob))
+                    .then(response => {
+                        if (response) {
+                            alert("Article sent to your Kindle!");
+                        } else {
+                            alert("Failed to send to Kindle.");
+                        }
+                    });
+            }
+        }
+
+        function convertToEPUB(title, content) {
+            return new Promise((resolve, reject) => {
+                const zip = new JSZip();
+                const epubFileName = `${title.replace(/\s+/g, "_")}.epub`;
+
+                const epubContent = `
+                    <h1>${title}</h1>
+                    <p>${content}</p>
+                `;
+
+                zip.file("content.html", epubContent);
+
+                zip.generateAsync({ type: "blob" })
+                    .then(blob => resolve(blob))
+                    .catch(err => reject(err));
+            });
+        }
+
+        function sendEmail(kindleEmail, title, epubBlob) {
+            const formData = new FormData();
+            formData.append('to', kindleEmail);
+            formData.append('subject', `Your Wikipedia Article: ${title}`);
+            formData.append('attachment', epubBlob, `${title.replace(/\s+/g, "_")}.epub`);
+
+            return fetch('https://api.email-service.com/send', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.ok)
+            .catch(() => false);
+        }
+    </script>
+    <!-- External JS libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</body>
+</html>
