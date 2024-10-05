@@ -30,7 +30,7 @@ function displayResults(results, language) {
         resultItem.className = "result-item";
         resultItem.textContent = results[i].title;
         resultItem.onclick = function () {
-            loadArticle(title, language);
+            loadArticle(this.textContent, language);
         };
         resultsContainer.appendChild(resultItem);
     }
